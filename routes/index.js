@@ -3,7 +3,7 @@ var router = express.Router();
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: '안녕하세요', pagename:'home.ejs' });
+  res.render('index', { title: '홈페이지', pageName:'home.ejs' });//render 그려준다. index -> .ejs
 });
 
 module.exports = router;
