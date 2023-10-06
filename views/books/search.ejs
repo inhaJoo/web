@@ -1,96 +1,105 @@
 <div class="row my-5">
-    <dis class="col">
-        <h1 class="text-center">도서검색</h1>
-        <div class="row justify-content-end my-5">
-            <form class="col-6 col-md-4 col-lg-3" name="frm">
+    <div class="col my-5">
+        <!-- 검색폼 -->
+        <div class="row mb-2 justify-content-end">
+            <form name="frm" class="col-6 col-md-4 col-lg-3">
                 <div class="input-group">
-                    <input class="form-control" name="query" value="안드로이드">
+                    <input name="query" type="text" class="form-control" value="자바">
                     <button class="btn btn-primary">검색</button>
                 </div>
             </form>
         </div>
-        <div id="div_books"></div>
+        <!-- 도서검색 결과 -->
+        <div id="div_books" class="row"></div>
         <!-- 페이지 이동버튼 -->
         <div class="text-center">
             <button id="prev" class="btn btn-primary">이전</button>
-            <span id="span_page" class="mx-3">1/10</span>
+            <span id="span_page" class="mx-3"></span>
             <button id="next" class="btn btn-primary">다음</button>
         </div>
-    </dis>
+    </div>
 </div>
-<!--도서목록 템플릿-->
+<!-- 도서 검색 template -->
 <script type="x-handlebars-template" id="temp_books">
     <table class="table table-striped">
         {{#each documents}}
             <tr>
-                <td><img src="{{check thumbnail}}" width="50" ></td>
+                <td><img src="{{check thumbnail}}" width="50"></td>
                 <td>{{title}}</td>
                 <td>{{format price}}</td>
                 <td>{{authors}}</td>
+                <td><button class="btn btn-primary" index="{{@index}}">도서정보</button></td>
             </tr>
+            <%-include('modal.ejs')%>
         {{/each}}
     </table>
 
 </script>
 <script>
-    Handlebars.registerHelper("check", function(thumbnail){//check 함수이름
+    Handlebars.registerHelper("check", function(thumbnail){
         if(thumbnail){
-            return thumbnail
-        }else {
-            return "http://via.placeholder.com/120x170";
+            return thumbnail;
+        } else {
+            return "http://via.placeholder.com/120x175";
         }
     });
 
-    Handlebars.registerHelper("format", function(price) {
+    Handlebars.registerHelper("format", function(price){
         return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '원';
     });
 </script>
 
 <script>
     let query = $(frm.query).val();
-    let page=1;
+    let page = 1;
+
     getBooks();
-    
+
+    // 도서정보 click(modal)
+    $("#div_books").on("click", ".btn-primary", function(){
+        let index = $(this).attr("index");
+        $("#modal" + index).modal("show");
+    });
+
+
     $(frm).on("submit", function(e){
-        e.preventDefault(); // submit 이벤트를 막아준다.
-        query = $(frm.query).val();
+        e.preventDefault();
+        query=$(frm.query).val();
         page=1;
         getBooks();
     });
 
-     //다음 버튼을 클릭한 경우
-     $("#next").on("click", function(){
-        page++;
-        getBooks();
-    });
-
-    //이전 버튼을 클릭한 경우
+    // 이전 버튼 클릭
     $("#prev").on("click", function(){
         page--;
         getBooks();
     });
 
-    //도서검색목록 가지고오기
-    function getBooks() {
+    // 다음 버튼 클릭
+    $("#next").on("click", function(){
+        page++;
+        getBooks();
+    });
+
+    function getBooks(){
         $.ajax({
             type:"get",
             url:"https://dapi.kakao.com/v3/search/book?target=title",
-            headers:{"Authorization":"KakaoAK f2dc12b4d17f911264714020d61e326c"},
+            headers: {"Authorization": "KakaoAK 47d18512e80079439c076a3605f727e4"},
             data:{query:query, page:page, size:6},
-            success:function(data) {
-                console.log(data);
-                let temp=Handlebars.compile($("#temp_books").html())
-                $("#div_books").html(temp(data));
+            success:function(result){
+                console.log(result);
+                let temp = Handlebars.compile($("#temp_books").html());
+                $("#div_books").html(temp(result));
+                let last = Math.ceil(result.meta.pageable_count/6);
+                $("#span_page").html(page + "/" + last);
 
-                let last = Math.ceil(data.meta.pageable_count/6);
-                $("#span_page").html(page + "/"+last);
-
-                if(page == 1) $("#prev").attr("disabled", true);
+                if(page == 1) $("#prev").attr("disabled", true)
                 else $("#prev").attr("disabled", false);
-                if(data.meta.is_end) $("#next").attr("disabled", true);
+
+                if(result.meta.is_end) $("#next").attr("disabled", true)
                 else $("#next").attr("disabled", false);
             }
-
         });
     }
 </script>

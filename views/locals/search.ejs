@@ -1,0 +1,122 @@
+<div class="row my-5">
+    <div class="col">
+        <h1 class="text-center">지역 검색</h1>
+        <div class="row justify-content-end">
+            <form class="col-6 col-lg-3 col-md-4" name="frm">
+                <div class="input-group">
+                    <input class="form-control" placeholder="검색어" name="query" value="인천대학교">
+                    <button class="btn btn-primary">검색</button>
+                </div>
+            </form>
+        </div>
+        <div  id="div_locals"></div>       
+        <div class="text-center" id="div_page">
+            <button class="btn btn-primary" id="prev">이전</button>
+            <span class="mx-3" id="span_page">1/10</span>
+            <button class="btn btn-primary" id="next">다음</button>
+        </div>
+        <!-- 지도출력 -->
+        <div id="map" style="width:100%;height:400px;" class="my-5"></div>
+    </div>
+</div>
+
+<script type="x-handlebars-template" id="temp_locals">
+    <table class="table table-striped">
+    {{#each documents}}
+        <tr>
+            <td class="place">{{place_name}}</td>
+            <td>{{address_name}}</td>
+            <td class="phone">{{phone}}</td>
+            <td><button class="btn btn-primary location" x="{{x}}" y="{{y}}">위치보기</button></td>
+        </tr>     
+    {{/each}}
+    </tr>
+</script>
+
+<script>
+    let query=$(frm.query).val();
+    let page=1;
+    let size=5;
+
+    $("#div_locals").on("click", "button", function(){
+        let x = $(this).attr("x");
+        let y = $(this).attr("y");
+
+        var container = document.getElementById('map');
+		var options = {
+			center: new kakao.maps.LatLng(y, x),
+			level: 3
+		};
+        
+
+		var map = new kakao.maps.Map(container, options); //지도 생성 및 객체 리턴
+        var markerPosition  = new kakao.maps.LatLng(y, x);  // 마커가 표시될 위치입니다 
+        var marker = new kakao.maps.Marker({  // 마커를 생성합니다
+            position: markerPosition
+        });
+        marker.setMap(map);  // 마커가 지도 위에 표시되도록 설정합니다
+
+        let row = $(this).parent().parent();
+        let place = row.find(".place").text();
+        let phone = row.find(".phone").text();
+        var str ="<div style='padding:5px;font-size:12px;'>" + place + "<br>" + phone + "</div>";
+        var info=new kakao.maps.InfoWindow({ content:str });
+        kakao.maps.event.addListener(marker, "mouseover", function() { 
+            info.open(map, marker); 
+        });
+        kakao.maps.event.addListener(marker, "mouseout", function() {
+            info.close(map, marker); 
+        });
+    });
+
+    getLocals();
+
+    $("#next").on("click", function(){
+        page++;
+        getLocals();    
+    });
+
+    $("#prev").on("click", function(){
+        page--;
+        getLocals();
+    });
+
+    $(frm).on("submit", function(e){
+        e.preventDefault();
+        query=$(frm.query).val();
+        if(query=="") {
+            alert("검색 내용을 입력하세요!");
+            $(frm.query).focus();
+        }else{
+            page=1;
+            getLocals();
+        }
+    });
+
+    function getLocals(){
+        $.ajax({
+            type:"get",
+            url:"https://dapi.kakao.com/v2/local/search/keyword.json",
+            headers:{Authorization:"KakaoAK 9494562bdfc66982db49c8415e2a883d"},
+            data:{query:query, page:page, size:size},
+            success:function(data){
+                console.log(data);
+                let temp=Handlebars.compile($("#temp_locals").html());
+                $("#div_locals").html(temp(data));
+
+                if(page==1) 
+                    $("#prev").attr("disabled", true)
+                else 
+                    $("#prev").attr("disabled", false);
+                
+                if(data.meta.is_end) 
+                    $("#next").attr("disabled", true)
+                else 
+                    $("#next").attr("disabled", false);
+                
+                let last = Math.ceil(data.meta.pageable_count/size);
+                $("#span_page").html(page + "/" + last);
+            }
+        })
+    }
+</script>

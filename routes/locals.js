@@ -1,9 +1,10 @@
 var express = require('express');
 var router = express.Router();
 
-/* page :: Main */
+/* 지역검색 */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: '안녕하세요', pageName:'home.ejs' });
+  res.render('index', { title: '지역검색', pageName:'locals/search.ejs' });
 });
+// 렌더링 : ejs file
 
 module.exports = router;

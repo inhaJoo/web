@@ -1,93 +1,108 @@
+<style>
+    #div_books img {
+        cursor: pointer;
+    }
+</style>
 <div class="row my-5">
-    <div class="col">
+    <div class="col my-5">
         <!-- 검색폼 -->
         <div class="row mb-2 justify-content-end">
             <form name="frm" class="col-6 col-md-4 col-lg-3">
                 <div class="input-group">
-                    <input name="query" class="form-control" value="자바">
+                    <input name="query" type="text" class="form-control" value="자바">
                     <button class="btn btn-primary">검색</button>
                 </div>
             </form>
         </div>
-        <!-- 도서검색결과 -->
+        <!-- 도서검색 결과 -->
         <div id="div_books" class="row"></div>
         <!-- 페이지 이동버튼 -->
         <div class="text-center">
             <button id="prev" class="btn btn-primary">이전</button>
-            <span id="span_page" class="mx-3">1/10</span>
+            <span id="span_page" class="mx-3"></span>
             <button id="next" class="btn btn-primary">다음</button>
         </div>
     </div>
-    <!-- <h1 class="text-center">홈페이지입니다...</h1> -->
 </div>
-<!--도서검색 템플릿-->
+<!-- 도서 검색 template -->
 <script type="x-handlebars-template" id="temp_books">
     {{#each documents}}
-        <div class="col-6 col-md-4 col-lg-2 mb-3">
+        <div class="col col-6 col-md-4 col-lg-2 mb-3">
             <div class="card">
                 <div class="card-body">
-                    <img src="{{check thumbnail}}" width="90%">
-                    <div class="ellipsis pt-3" style="font-size:0.8rem;">{{title}}</div>
+                    <img src="{{check thumbnail}}" width="90%" style="margin:0 auto; display:block" index="{{@index}}">
+                    <div class="ellipsis pt-3" style="form-size:0.8rem">{{title}}</div>
                 </div>
-                <div class="card-footer" style="font-size:0.8rem">{{format price}}</div>
+                <div class="card-footer" style="font-size:0.8rem">
+                    {{format price}}
+                </div>
             </div>
         </div>
+        <%-include('books/modal.ejs')%>
     {{/each}}
 </script>
 <script>
-    Handlebars.registerHelper("check", function(thumbnail){//check 함수이름
+    Handlebars.registerHelper("check", function(thumbnail){
         if(thumbnail){
-            return thumbnail
-        }else {
-            return "http://via.placeholder.com/120x170";
+            return thumbnail;
+        } else {
+            return "http://via.placeholder.com/120x175";
         }
     });
 
-    Handlebars.registerHelper("format", function(price) {
+    Handlebars.registerHelper("format", function(price){
         return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '원';
     });
 </script>
+
 <script>
-    let query=$(frm.query).val();
-    let page=1;
+    let query = $(frm.query).val();
+    let page = 1;
 
     getBooks();
     $(frm).on("submit", function(e){
-        e.preventDefault();//기본 이벤트 막아서 실행 안함
-        query=$(frm.query).val();//exam
+        e.preventDefault();
+        query=$(frm.query).val();
         page=1;
-        getBooks();//exam
-    });
-
-    //다음 버튼을 클릭한 경우
-    $("#next").on("click", function(){
-        page++;
         getBooks();
     });
 
-    //이전 버튼을 클릭한 경우
+    // img click(modal)
+    $("#div_books").on('click', 'img', function(){
+        let index = $(this).attr("index");
+        $("#modal" + index).modal("show");
+    });
+
+    // 이전 버튼 클릭
     $("#prev").on("click", function(){
         page--;
         getBooks();
     });
 
+    // 다음 버튼 클릭
+    $("#next").on("click", function(){
+        page++;
+        getBooks();
+    });
 
-    function getBooks() {
+    function getBooks(){
         $.ajax({
             type:"get",
             url:"https://dapi.kakao.com/v3/search/book?target=title",
-            headers:{"Authorization":"KakaoAK f2dc12b4d17f911264714020d61e326c"},
+            headers: {"Authorization": "KakaoAK 47d18512e80079439c076a3605f727e4"},
             data:{query:query, page:page, size:6},
             success:function(result){
                 console.log(result);
-                let temp=Handlebars.compile($("#temp_books").html())//1번 컴파일
-                $("#div_books").html(temp(result));//2번 temp에 result 담기, 3번 #div_books.html()
-                let last = Math.ceil(result.meta.pageable_count/6);
-                $("#span_page").html(page + "/"+last);
+                let temp = Handlebars.compile($("#temp_books").html());
+                $("#div_books").html(temp(result));
 
-                if(page == 1) $("#prev").attr("disabled", true);
+                let last = Math.ceil(result.meta.pageable_count/6);
+                $("#span_page").html(page + "/" + last);
+
+                if(page == 1) $("#prev").attr("disabled", true)
                 else $("#prev").attr("disabled", false);
-                if(result.meta.is_end) $("#next").attr("disabled", true);
+
+                if(result.meta.is_end) $("#next").attr("disabled", true)
                 else $("#next").attr("disabled", false);
             }
         });
