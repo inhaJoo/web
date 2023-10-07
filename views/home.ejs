@@ -2,6 +2,11 @@
     #div_books img {
         cursor: pointer;
     }
+    #div_books .bi-cart-check{
+        cursor: pointer;
+        color:green;
+        font-size:1.5rem;
+    }
 </style>
 <div class="row my-5">
     <div class="col my-5">
@@ -35,6 +40,7 @@
                 </div>
                 <div class="card-footer" style="font-size:0.8rem">
                     {{format price}}
+                    <i class="bi bi-cart-check float-end" book="{{book @this}}"></i>
                 </div>
             </div>
         </div>
@@ -53,6 +59,10 @@
     Handlebars.registerHelper("format", function(price){
         return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '원';
     });
+
+    Handlebars.registerHelper("book", function(book){
+        return JSON.stringify(book);//object -> string 변환
+    });
 </script>
 
 <script>
@@ -60,6 +70,18 @@
     let page = 1;
 
     getBooks();
+
+    //장바구니를 클릭한 경우
+    $("#div_books").on("click", ".bi", function(){
+        if(!sessionStorage.getItem("email")) {
+            location.href="/users/login";
+        }else{
+            //장바구니에 등록
+            const book=JSON.parse($(this).attr("book")); // string -> Object
+            console.log(book);
+        }
+    });
+
     $(frm).on("submit", function(e){
         e.preventDefault();
         query=$(frm.query).val();
