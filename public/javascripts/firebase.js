@@ -14,4 +14,4 @@ appId: "1:747641690455:web:b046e8490c3ebecff40612"
 };
 
 // Initialize Firebase
-export const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);//export 필수

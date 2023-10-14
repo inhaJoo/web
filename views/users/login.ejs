@@ -41,8 +41,9 @@
             alert("비밀번호를 입력하세요!");
             $(frm.password).focus();
         }else{
-            //로그인
+            //로그인체크
             // alert(email+pwd);
+            //signInWithEmailAndPassword - firebase 제공 함수
             signInWithEmailAndPassword(auth, email, pwd).then(success =>{
                 console.log(success);
                 alert("로그인 성공했습니다.")

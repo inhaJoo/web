@@ -19,7 +19,7 @@
                 </div>
             </form>
         </div>
-        <!-- 도서검색 결과 -->
+        <!-- 도서검색 결과 출력 -->
         <div id="div_books" class="row"></div>
         <!-- 페이지 이동버튼 -->
         <div class="text-center">
@@ -29,7 +29,7 @@
         </div>
     </div>
 </div>
-<!-- 도서 검색 template -->
+<!-- 도서검색 정보 출력 template -->
 <script type="x-handlebars-template" id="temp_books">
     {{#each documents}}
         <div class="col col-6 col-md-4 col-lg-2 mb-3">
@@ -40,7 +40,7 @@
                 </div>
                 <div class="card-footer" style="font-size:0.8rem">
                     {{format price}}
-                    <i class="bi bi-cart-check float-end" book="{{book @this}}"></i>
+                    <i class="cart bi bi-basket float-end" book="{{book @this}}"></i>
                 </div>
             </div>
         </div>
@@ -65,20 +65,47 @@
     });
 </script>
 
-<script>
+<script type="module">
+    import { app } from "/javascripts/firebase.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+    const db = getDatabase(app);//app에서 가져옴
+
     let query = $(frm.query).val();
     let page = 1;
 
     getBooks();
 
     //장바구니를 클릭한 경우
-    $("#div_books").on("click", ".bi", function(){
-        if(!sessionStorage.getItem("email")) {
+    // $("#div_books").on("click", ".bi", function(){
+    //     if(!sessionStorage.getItem("email")) {
+    //         location.href="/users/login";
+    //     }else{
+    //         //장바구니에 등록
+    //         const book=JSON.parse($(this).attr("book")); // string -> Object
+    //         console.log(book);
+    //     }
+    // });
+
+    $("#div_books").on("click", ".cart", async function(){
+        if(!sessionStorage.getItem("email")){
+            alert("로그인이 되지 않았습니다.");
             location.href="/users/login";
-        }else{
-            //장바구니에 등록
+        }else {
+            //장바구니에 있는지 체크
             const book=JSON.parse($(this).attr("book")); // string -> Object
-            console.log(book);
+            const ref_book=ref(db, `cart/${sessionStorage.getItem("uid")}/${book.isbn}`);
+            const snapshot = await get(ref_book);
+
+            console.log('....', snapshot.val());
+
+            if(snapshot.val()){
+                alert("이미 장바구니에 존재합니다!")
+            }else {
+                if(!confirm('장바구니에 해당 도서 넣으실래요?')) return;
+                set(ref_book, book); 
+                alert("해당도서가 저장되었습니다.");
+            }
         }
     });
 
