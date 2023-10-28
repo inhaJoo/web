@@ -4,7 +4,7 @@
         <div class="row justify-content-end">
             <form class="col-6 col-lg-3 col-md-4" name="frm">
                 <div class="input-group">
-                    <input class="form-control" placeholder="검색어" name="query" value="인천대학교">
+                    <input class="form-control" placeholder="검색어" name="query" value="인하">
                     <button class="btn btn-primary">검색</button>
                 </div>
             </form>
@@ -27,13 +27,25 @@
             <td class="place">{{place_name}}</td>
             <td>{{address_name}}</td>
             <td class="phone">{{phone}}</td>
+            <td><button class="btn btn-primary btn-sm" local="{{toString @this}}">즐겨찾기</button></td>
             <td><button class="btn btn-primary location" x="{{x}}" y="{{y}}">위치보기</button></td>
         </tr>     
     {{/each}}
-    </tr>
+    </table>
 </script>
 
 <script>
+    Handlebars.registerHelper("toString", function(local){
+        return JSON.stringify(local);//object -> string
+    });
+</script>
+
+<script type="module">
+    import { app } from "/javascripts/firebase.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";//ref 주소지정
+
+    const db = getDatabase(app);//app에서 가져옴
+
     let query=$(frm.query).val();
     let page=1;
     let size=5;
@@ -70,6 +82,28 @@
     });
 
     getLocals();
+
+    //즐겨찾기 버튼
+    $("#div_locals").on("click", ".btn-sm", async function(){
+        if(!sessionStorage.getItem("email")){
+            sessionStorage.setItem("target", "/locals");
+            location.href='/users/login';
+        }else{
+            //로그인이 된 경우
+            const local=JSON.parse($(this).attr("local"));
+            console.log(local);
+            const ref_local = `favorite/${sessionStorage.getItem("uid")}/${local.id}`;//``은 문자열과 변수 혼합해서 사용가능
+            const snapshot=await get(ref(db, ref_local));//get은 비동기 함수, snapshot 내용이 많아서 가져오기 전에 log 찍으면 오류가 남.
+            console.log(snapshot.val());
+            if(snapshot.val()) {
+                alert("이미 등록되었습니다.");
+            }else {
+                await set(ref(db, ref_local), local);
+                alert("즐겨찾기에 등록되었습니다.");
+            }
+        }
+    });
+
 
     $("#next").on("click", function(){
         page++;

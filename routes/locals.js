@@ -7,4 +7,9 @@ router.get('/', function(req, res, next) {
 });
 // 렌더링 : ejs file
 
+//즐겨찾기
+router.get('/favorite', function(req, res){
+  res.render('index', {title:'즐겨찾기', pageName:'locals/favorite.ejs'});
+});
+
 module.exports = router;
