@@ -1,0 +1,88 @@
+<div class="my-5">
+    <h1 class="text-center mb-5">게시판</h1>
+    <div class="row">
+        <div class="col">
+            게시글수: <span id="total">0</span>
+        </div>
+        <div class="text-end">
+            <button id="btn-insert" class="btn btn-primary">글쓰기</button>
+        </div>
+    </div>
+    <div id="div_posts"></div>
+    <div class="text-center">
+        <button id="prev" class="btn btn-primary">이전</button>
+        <span id="page">0/0</span>
+        <button id="next" class="btn btn-primary">다음</button>
+    </div>
+</div>
+<script id="temp_posts" type="x-handlebars-template">
+    <table class="table">
+        {{#each .}}
+            <tr>
+                <td>{{title}}</td>
+                <td>{{date}}</td>
+                <td>{{email}}</td>
+            </tr>
+        {{/each}}
+    </table>
+</script>
+
+<script type="module">
+    import { app } from "/javascripts/firebase.js";
+    import { getFirestore,collection } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    import { query,orderBy,getDocs,where,doc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    const db = getFirestore(app);
+    let page=1
+    let last=1
+    let size=3;
+    
+    $("#next").on("click", function(){
+        page++;
+        getPosts();
+    });
+
+    $("#prev").on("click", function(){
+        page--;
+        getPosts();
+    });
+
+    getPosts();
+    async function getPosts() {
+        const q=query(collection(db, 'posts'), orderBy("date", "desc"))
+        const snapshot = await getDocs(q)
+        let rows=[];
+        const total=snapshot.docs.length;
+        last = Math.ceil(total/size)
+
+        $("#page").html(`${page}/${last}`);
+        $("#total").html(total);
+
+        snapshot.docs.forEach((doc, index)=>{
+            const start = (page-1)*size;
+            const end = (page*size)-1;
+            if(index>=start && index<=end) {
+                const row={id:doc.id, ...doc.data()};// ... : 복제 하라는 뜻
+                rows.push(row)
+            }
+        })
+        const temp = Handlebars.compile($("#temp_posts").html())
+        $("#div_posts").html(temp(rows))
+
+        if(page===1) $("#prev").attr("disabled", true);
+        else $("#prev").attr("disabled", false);
+
+        if(page===last) $("#next").attr("disabled", true);
+        else $("#next").attr("disabled", false);
+    };
+
+    $("#btn-insert").on("click", function(){
+        if(sessionStorage.getItem("uid")) {
+            //로그인 O
+            location.href="/posts/insert"
+        }else{
+            //로그인 X
+            sessionStorage.setItem("target","/posts/insert")
+            location.href="users/login"
+        }
+    })
+</script>
