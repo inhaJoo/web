@@ -13,12 +13,16 @@
 <script type="module">
     import { app } from "/javascripts/firebase.js";
     import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    //파이어베이스, 테이블, 위치
     const db = getFirestore(app);
 
+    //글쓰기 등록버튼 클릭
     $(frm).on("submit", async function(e){
         e.preventDefault();
+        
         const title=$(frm.title).val()
         const body=$(frm.body).val()
+        
         if(title==""){
             alert("제목을 입력하세요!")
             $(frm.title).focus();
@@ -31,12 +35,13 @@
         }
         if(confirm("새로운 게시글을 등록하실래요?")){
             //게시글 등록
-            const email = sessionStorage.getItem("email")
-            const date=moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
+            const email = sessionStorage.getItem("email")//누가?
+            //moment().format();  날짜 포맷 변경 / cdn주소 등록해야함
+            const date=moment(new Date()).format("YYYY-MM-DD HH:mm:ss"); //언제?
             const data={email, date, title, body}
-            console.log(data);
-
-            await addDoc(collection(db, 'posts'), data)
+            // console.log(data);
+            //addDoc(테이블(데이터, 이름), 데이터)
+            await addDoc(collection(db, 'posts'), data) //데이터 저장 완료된 후 메시지 불러와야함. await 사용
             alert("새로운 글이 등록되었습니다.")
             location.href="/posts"
         }

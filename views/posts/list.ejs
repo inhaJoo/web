@@ -2,26 +2,32 @@
     <h1 class="text-center mb-5">게시판</h1>
     <div class="row">
         <div class="col">
-            게시글수: <span id="total">0</span>
+            게시글수: <span id="total">0</span>건
         </div>
-        <div class="text-end">
-            <button id="btn-insert" class="btn btn-primary">글쓰기</button>
+        <div class="col text-end">
+            <button id="btn-insert" class="btn btn-primary px-5">글쓰기</button>
         </div>
+        <hr>
     </div>
+    <!-- 출력영역 -->
     <div id="div_posts"></div>
-    <div class="text-center">
+    <div id="pagination" class="pagination justify-content-center mt-5"></div><!-- 아이디, 클래스네임 정해짐 -->
+
+    <!-- <div class="text-center">
         <button id="prev" class="btn btn-primary">이전</button>
         <span id="page">0/0</span>
         <button id="next" class="btn btn-primary">다음</button>
-    </div>
+    </div> -->
 </div>
+<!-- 출력영역 템플릿 -->
 <script id="temp_posts" type="x-handlebars-template">
     <table class="table">
         {{#each .}}
             <tr>
-                <td>{{title}}</td>
-                <td>{{date}}</td>
+                <td>{{index}}</td>
+                <td><a href="/posts/read?id={{id}}">{{title}}</td>
                 <td>{{email}}</td>
+                <td>{{date}}</td>
             </tr>
         {{/each}}
     </table>
@@ -30,41 +36,57 @@
 <script type="module">
     import { app } from "/javascripts/firebase.js";
     import { getFirestore,collection } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-    import { query,orderBy,getDocs,where,doc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    import { query,orderBy,getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    //쿼리, 순서, 데이터값
     const db = getFirestore(app);
-    let page=1
+    let page=1//let은 변수 값 변할 수 있음
     let last=1
-    let size=3;
+    const size=3;//상수
+    let total=0;
     
-    $("#next").on("click", function(){
-        page++;
-        getPosts();
-    });
+    // $("#next").on("click", function(){
+    //     page++;
+    //     getPosts();
+    // });
 
-    $("#prev").on("click", function(){
-        page--;
-        getPosts();
-    });
+    // $("#prev").on("click", function(){
+    //     page--;
+    //     getPosts();
+    // });
 
     getPosts();
+    //페이징 처리 함수
     async function getPosts() {
+        //query(collection(위치), orderBy(순서));
         const q=query(collection(db, 'posts'), orderBy("date", "desc"))
+        //getDoc 데이터 값
         const snapshot = await getDocs(q)
         let rows=[];
-        const total=snapshot.docs.length;
-        last = Math.ceil(total/size)
 
-        $("#page").html(`${page}/${last}`);
+        //기존 페이징 처리
+        //total=snapshot.docs.length;
+        //last = Math.ceil(total/size)
+        // $("#page").html(`${page}/${last}`);
         $("#total").html(total);
+        
+        //전체 페이지수 구하기
+        if(total!= snapshot.docs.length) {
+            total=snapshot.docs.length;
+            const totalPages=Math.ceil(total/size);
+            $("#pagination").twbsPagination("changeTotalPages", totalPages, 1);
+        }
 
+        //데이터 출력
         snapshot.docs.forEach((doc, index)=>{
             const start = (page-1)*size;
             const end = (page*size)-1;
             if(index>=start && index<=end) {
-                const row={id:doc.id, ...doc.data()};// ... : 복제 하라는 뜻
+                const row={index:index+1, id:doc.id, ...doc.data()};// ... : 데이터 풀어져서 나옴
                 rows.push(row)
             }
-        })
+        });
+        
+        //템플릿 컴파일
         const temp = Handlebars.compile($("#temp_posts").html())
         $("#div_posts").html(temp(rows))
 
@@ -75,14 +97,30 @@
         else $("#next").attr("disabled", false);
     };
 
+    //글쓰기 버튼 클릭
     $("#btn-insert").on("click", function(){
         if(sessionStorage.getItem("uid")) {
             //로그인 O
             location.href="/posts/insert"
         }else{
             //로그인 X
-            sessionStorage.setItem("target","/posts/insert")
+            sessionStorage.setItem("target","/posts/insert")//target에 글쓰기 경로 저장
             location.href="users/login"
         }
-    })
+    });
+
+    $('#pagination').twbsPagination({
+        totalPages:10, //총 페이지 번호 수
+        visiblePages: 5, // 하단에서 한 번에 보여 지는 페이지 번호 수
+        startPage : 1, // 시작 시 표시되는 현재 페이지
+        initiateStartPageClick: false, // 플러그인이 시작 시 페이지 버튼 클릭 여부 (default : true) 
+        first : '<<', // 페이지네이션 버튼 중 처음으로 돌아가는 버튼에 쓰여 있는 텍스트
+        prev : '<', // 이전 페이지 버튼에 쓰여 있는 텍스트
+        next : '>', // 다음 페이지 버튼에 쓰여 있는 텍스트
+        last : '>>', // 페이지네이션 버튼 중 마지막으로 가는 버튼에 쓰여 있는 텍스트
+        onPageClick: function (event, clickPage) {
+             page=clickPage;
+             getPosts(); 
+        }
+    });
 </script>
