@@ -27,6 +27,14 @@ a {
   -webkit-box-orient: vertical;
 }
 
+.ellipsis2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Sunflower:wght@500&display=swap');
 
 *{

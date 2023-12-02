@@ -76,7 +76,7 @@
             $("#pagination").twbsPagination("changeTotalPages", totalPages, 1);
         }
 
-        //데이터 출력
+        //페이지 목록 출력
         snapshot.docs.forEach((doc, index)=>{
             const start = (page-1)*size;
             const end = (page*size)-1;
